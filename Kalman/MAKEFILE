@@ -1,0 +1,23 @@
+FC = gcc
+OS = Windows_NT
+ERASER = erase
+# -- platform
+ifeq ($(OS),Windows_NT)
+# WIN32
+PLATFORM = __MINGW__ 
+else
+# UNIX
+PLATFORM = __UNIX__ 
+endif
+
+clean: 
+	$(ERASER) *.o test.exe
+
+matrix.o: utils/matrix.c
+	$(FC) -c utils/matrix.c
+
+tests.o: tests.c
+	$(FC) -c tests.c
+
+test.exe: tests.o matrix.o
+	$(FC) -o $@ tests.o
