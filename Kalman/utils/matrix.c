@@ -189,3 +189,13 @@ double* mat_num(double a, double *A, int *size) {
     }
     return C;
 }
+
+void printer(int* size, double* A) {
+    int i, o;
+    for(i = 0; i < size[0]; ++i) { 
+        for(o = 0; o < size[1]; ++o) {
+            printf("%f\t", A[i*size[0]+o]);
+        }
+        printf("\n");
+    }
+}

@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "matrix.c"  // Suponemos que matrix.h contiene las declaraciones de las funciones en matrix.c
+#include "../utils/matrix.c"  // Suponemos que matrix.h contiene las declaraciones de las funciones en matrix.c
 
 typedef struct {
     double *x;  // State estimate vector

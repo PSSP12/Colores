@@ -1,16 +1,3 @@
 # Files to ignore
-
-# Objects (Machine specific)
-*.o
-
-# Executables
-tests.exe
-
-# Ignore all
-*
-
-# Unignore all with extensions
-!*.*
-
-# Unignore all dirs
-!*/
+*.exe
+.vscode

@@ -1,6 +1,5 @@
 FC = gcc
-OS = Windows_NT
-ERASER = erase
+ERASER = rm
 # -- platform
 ifeq ($(OS),Windows_NT)
 # WIN32
