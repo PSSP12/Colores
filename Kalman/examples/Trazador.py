@@ -11,11 +11,9 @@ import time as t
 import ffi, os
 
 # ------------------- Funciones de C ------------------- #
-lib = ffi.open(os.getcwd()+"/processing.so")
-main = lib.func("i", "main", "v")   # Función main
+lib = ffi.open(os.getcwd()+"/Trazador.so")
+Trazador = lib.func("i", "Trazador", "fff")   # Función main
 # ------------------------------------------------------ #
 GyroD = GyroSensor(Port.S2)
 
-print(GyroD.angle())
-
-main()
+Trazador(1000, 200, 0)

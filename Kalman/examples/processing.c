@@ -6,7 +6,7 @@
 #include "ev3_port.h"
 #include "ev3_sensor.h"
 #include "ev3_tacho.h"
-#include "coroutine.h"
+// #include "coroutine.h"
 // #include "../utils/matrix.c"
 #include "../Filters/LKF.c"
 
@@ -25,7 +25,7 @@
 #define GRANDE_I OUTPUT_A
 #define GRANDE_D OUTPUT_B
 
-int main(void) {
+double angle(void) {
     // Inicialización
     while(ev3_init() < 1){Sleep(10);}
     while(ev3_sensor_init() < 1){Sleep(10);}
@@ -37,14 +37,17 @@ int main(void) {
     ev3_search_sensor_plugged_in(GYRO_DCHA, EXT_PORT__NONE_, &Gyro_D, 0);
 
     get_sensor_value0(Gyro_D, &ang_d);
-    printf("%f\n", ang_d);
+    
+    ev3_uninit();
 
-    double A[3][3] = {
-        {1, 2, 3},
-        {4, 3, 2},
-        {9, 7, 5}
-    };
-    int size[2] = {3, 3};
+    return ang_d;
 
-    printer((int*)&size, (double*)&A);
+    // double A[3][3] = {
+    //     {1, 2, 3},
+    //     {4, 3, 2},
+    //     {9, 7, 5}
+    // };
+    // int size[2] = {3, 3};
+
+    // printer((int*)&size, (double*)&A);
 }
