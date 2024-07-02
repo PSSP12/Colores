@@ -1,5 +1,3 @@
-// Author Pablo Sánchez de Pablos
-
 // Control system for a robot to run following a certain angle
 
 // NOTES:

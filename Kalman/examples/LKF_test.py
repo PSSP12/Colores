@@ -9,3 +9,9 @@ from pybricks.robotics import DriveBase
 from pybricks.media.ev3dev import SoundFile, ImageFile, Font
 import time as t
 import ffi, os
+
+lib = ffi.open("./LKF_test.so")
+main = lib.func("i", "main", "v")
+
+main()
+print("Done")
