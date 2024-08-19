@@ -51,72 +51,58 @@ void initialize(int obs_size, int state_size) {
 
 void kalman_predict(KalmanFilter *kf, int size) {
     int state_size[2] = {size, size};
+    int vector_size[2] = {size, 1};
     
     // x = F * x
-    mat_product(state_size, state_size, kf->F, kf->x, temp);
-    // free(kf->x);
+    mat_product(state_size, vector_size, kf->F, kf->x, temp);
     kf->x = temp;
     
     // P = F * P * F^T + Q
     mat_transpose(state_size, kf->F, F_transpose);
     mat_product(state_size, state_size, kf->F, kf->P, FP);
     mat_product(state_size, state_size, FP, F_transpose, FPF_transpose);
-    // free(FP);
-    // free(F_transpose);
 
     mat_sum(state_size, FPF_transpose, kf->Q, new_P);
-    // free(kf->P);
     kf->P = new_P;
-    // free(FPF_transpose);
 }
 
 void kalman_update(KalmanFilter *kf, double *z, int size, int o_size) {
     int state_size[2] = {size, size};
-    int state_size_2[2] = {size, 1};
-    int obs_size[2] = {o_size, size};
+    int vector_size[2] = {size, 1};
+    int H_size[2] = {o_size, size};
+    int H_size_t[2] = {size, o_size};
     int obs_size_2[2] = {o_size, o_size};
-    int obs_size_t[2] = {size, o_size};
     
     // y = z - H * x
-    mat_product(obs_size, state_size_2, kf->H, kf->x, Hx);
+    mat_product(H_size, vector_size, kf->H, kf->x, Hx);
     double *y = (double *)malloc(o_size * sizeof(double));
     for (int i = 0; i < o_size; i++) {
         y[i] = z[i] - Hx[i];
     }
-    // free(Hx);
     
     // S = H * P * H^T + R
-    mat_transpose(obs_size, kf->H, H_transpose);
-    mat_product(obs_size, state_size, kf->H, kf->P, HP);
-    mat_product(obs_size, obs_size_t, HP, H_transpose, HPH_transpose);
-    // free(HP);
+    mat_transpose(H_size, kf->H, H_transpose);
+    mat_product(H_size, state_size, kf->H, kf->P, HP);
+    mat_product(H_size, H_size_t, HP, H_transpose, HPH_transpose);
     
     mat_sum(obs_size_2, HPH_transpose, kf->R, S);
-    // free(HPH_transpose);
-    // free(H_transpose);
     
     // K = P * H^T * S^(-1)
-    mat_inv(obs_size, S, S_inv);
-    // free(S);
+    mat_inv(obs_size_2, S, S_inv);
     
-    mat_transpose(obs_size, kf->H, H_transpose);
-    mat_product(state_size, obs_size_t, kf->P, H_transpose, PH_transpose);
-    // free(H_transpose);
+    mat_transpose(H_size, kf->H, H_transpose);
+    mat_product(state_size, H_size_t, kf->P, H_transpose, PH_transpose);
     
-    mat_product(state_size, obs_size, PH_transpose, S_inv, K);
-    // free(S_inv);
-    // free(PH_transpose);
+    mat_product(H_size_t, obs_size_2, PH_transpose, S_inv, K);
     
     // x = x + K * y
-    mat_product(state_size, obs_size, K, y, Ky);
+    mat_product(H_size_t, obs_size_2, K, y, Ky);
     for (int i = 0; i < size; i++) {
         kf->x[i] += Ky[i];
     }
-    // free(Ky);
-    // free(y);
     
     // P = (I - K * H) * P
-    mat_product(state_size, obs_size, K, kf->H, KH);
+    mat_product(H_size_t, H_size, K, kf->H, KH);
     double *I = (double *)malloc(size * size * sizeof(double));
     for (int i = 0; i < size; i++) {
         for (int j = 0; j < size; j++) {
@@ -125,14 +111,9 @@ void kalman_update(KalmanFilter *kf, double *z, int size, int o_size) {
     }
     mat_num(-1.0, state_size, KH, minus_KH);
     mat_sum(state_size, I, minus_KH, I_KH);
-    // free(I);
-    // free(KH);
     
     mat_product(state_size, state_size, I_KH, kf->P, new_P);
-    // free(I_KH);
-    // free(kf->P);
     kf->P = new_P;
-    // free(K);
 }
 
 void finalize() {
