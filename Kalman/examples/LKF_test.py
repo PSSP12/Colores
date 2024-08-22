@@ -22,7 +22,5 @@ main = lib.func("i", "main", "v")   # Función main
 # ------------------------------------------------------ #
 
 print("Started c")
-try:
-    main()
-except Exception as e:
-    print("Error:", e)
+main()
+print("Ended c")

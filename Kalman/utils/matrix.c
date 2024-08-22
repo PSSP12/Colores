@@ -3,8 +3,6 @@
 #include <math.h>
 // Basic matrix operations
 
-
-
 void swap_rows(double *A, double *I, int *size, int row1, int row2) {
     int n = size[0];
     for (int i = 0; i < n; i++) {

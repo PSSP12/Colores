@@ -1,16 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "../utils/matrix.c"  // Suponemos que matrix.h contiene las declaraciones de las funciones en matrix.c
-#include <sys/sysinfo.h>
+#include "../utils/matrix.c"
+
+// Variable declaration
 
 // Prediction
 double *temp, *F_transpose, *FP, *FPF_transpose, *FP, *FPF_transpose, *new_P;
 
-// Correction
+// Update
 double *Hx, *H_transpose, *HP, *HPH_transpose, *S, *S_inv, *PH_transpose, *K, *Ky, *KH, *I_KH, *minus_KH;
-
-// Stability
-bool started = false;
 
 typedef struct {
     double *x;  // State estimate vector
@@ -21,19 +19,24 @@ typedef struct {
     double *R;  // Observation noise covariance matrix
 } KalmanFilter;
 
+// Memory invasions prevention
+bool started = false;
+
 void initialize(int obs_size, int state_size) {
+    // Allocates the neccessary memory for the used variables along the functions in this code
+
     if (!started) {
-        // Stability
+        // Prevents double memory allocation
         started = true;
 
         // Prediction
-        temp = (double *)calloc(state_size, sizeof(double));  // Vector de estados temporal
+        temp = (double *)calloc(state_size, sizeof(double));
         F_transpose = (double *)calloc(state_size*state_size, sizeof(double));
         FP = (double *)calloc(state_size*state_size, sizeof(double));
         FPF_transpose = (double *)calloc(state_size*state_size, sizeof(double));
         new_P = (double *)calloc(state_size*state_size, sizeof(double));
 
-        // Correction
+        // Update
         Hx = (double *)calloc(obs_size*state_size, sizeof(double));
         H_transpose = (double *)calloc(obs_size*state_size, sizeof(double));
         HP = (double *)calloc(obs_size*state_size, sizeof(double));
@@ -42,14 +45,16 @@ void initialize(int obs_size, int state_size) {
         S_inv = (double *)calloc(obs_size*obs_size, sizeof(double));
         PH_transpose = (double *)calloc(state_size*obs_size, sizeof(double));
         K = (double *)calloc(state_size*obs_size, sizeof(double));
-        Ky = (double *)calloc(state_size*obs_size, sizeof(double));
-        KH = (double *)calloc(state_size*obs_size, sizeof(double));
+        Ky = (double *)calloc(state_size, sizeof(double));
+        KH = (double *)calloc(state_size*state_size, sizeof(double));
         I_KH = (double *)calloc(state_size*state_size, sizeof(double));
-        minus_KH = (double *)calloc(state_size*obs_size, sizeof(double));
+        minus_KH = (double *)calloc(state_size*state_size, sizeof(double));
     }
 }
 
 void kalman_predict(KalmanFilter *kf, int size) {
+    // Prediction step of the filter
+
     int state_size[2] = {size, size};
     int vector_size[2] = {size, 1};
     
@@ -67,6 +72,8 @@ void kalman_predict(KalmanFilter *kf, int size) {
 }
 
 void kalman_update(KalmanFilter *kf, double *z, int size, int o_size) {
+    // Update step of the filter
+
     int state_size[2] = {size, size};
     int vector_size[2] = {size, 1};
     int H_size[2] = {o_size, size};
@@ -117,6 +124,8 @@ void kalman_update(KalmanFilter *kf, double *z, int size, int o_size) {
 }
 
 void finalize() {
+    // Free up the previousy allocated memory
+
     if (started) {
         started = false;
         free(temp); free(F_transpose); free(FP); free(FPF_transpose); free(new_P); free(Hx); free(H_transpose); free(HP); free(HPH_transpose); free(S); free(S_inv); free(PH_transpose); free(K); free(Ky); free(KH); free(I_KH); free(minus_KH);

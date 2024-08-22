@@ -12,13 +12,13 @@
 
 #define Sleep( msec ) usleep(( msec ) * 1000 ) // Función para pausas de un número de milisegundos
 
-// Sensores:
+// Sensors
 #define GYRO_IZDA INPUT_1
 #define GYRO_DCHA INPUT_2
 #define COL_IZDA INPUT_3
 #define COL_DCHA INPUT_4
 
-// Motores
+// Motors
 #define MED_IZDA OUTPUT_D
 #define MED_DCHA OUTPUT_C
 #define GRANDE_I OUTPUT_A
@@ -30,29 +30,37 @@ int main(void) {
     while(ev3_sensor_init() < 1){Sleep(10);}
 
     uint8_t Gyro_I, Gyro_D, Color_I, Color_D, Grande_I, Grande_D, Mediano_I, Mediano_D;
-    float ang_d;
+    float ang, rate, T;
     ev3_search_sensor_plugged_in(GYRO_DCHA, EXT_PORT__NONE_, &Gyro_D, 0);
+    ev3_search_sensor_plugged_in(GYRO_IZDA, EXT_PORT__NONE_, &Gyro_I, 0);
 
-    // Tamaño de los estados y las observaciones
-    int state_size = 2;  // Matrices de tamaño 4x4
-    int obs_size = 1;    // Matrices de tamaño 2x4 (para 2 observaciones)
+    // Size of observation and state
+    int state_size = 2;
+    int obs_size = 1;
+
+    // File to store the test data
     FILE *file;
-    file = fopen("data.txt", "w");
+    file = fopen("data.csv", "w");
 
-    // Inicializar el filtro de Kalman
+    // File header
+    fprintf(file, "Time\tA_Kalman\tS_Kalman\tA_Raw\tS_Raw\n");
+
+    // Initialize filter and allocate memory
     KalmanFilter kf;
-    kf.x = (double *)malloc(state_size * sizeof(double));  // Vector de estados
-    kf.P = (double *)malloc(state_size * state_size * sizeof(double));  // Matriz de covarianza
-    kf.F = (double *)malloc(state_size * state_size * sizeof(double));  // Matriz de transición
-    kf.Q = (double *)malloc(state_size * state_size * sizeof(double));  // Matriz de ruido del proceso
-    kf.H = (double *)malloc(obs_size * state_size * sizeof(double));  // Matriz de observación
-    kf.R = (double *)malloc(obs_size * obs_size * sizeof(double));  // Matriz de ruido de observación
+    kf.x = (double *)malloc(state_size * sizeof(double));               // State vector
+    kf.P = (double *)malloc(state_size * state_size * sizeof(double));  // Covariance matrix
+    kf.F = (double *)malloc(state_size * state_size * sizeof(double));  // Transition matrix (model)
+    kf.Q = (double *)malloc(state_size * state_size * sizeof(double));  // Process noise matrix
+    kf.H = (double *)malloc(obs_size * state_size * sizeof(double));    // Observation matrix
+    kf.R = (double *)malloc(obs_size * obs_size * sizeof(double));      // Observation noise matrix
 
-    double dt = .1;
+    struct timeval T1, T2;
+    float dt;
+    T = 0;
 
-    // Aquí deberías inicializar kf.x, kf.P, kf.F, kf.Q, kf.H, y kf.R con valores apropiados
+    // Initialize filter variables
     double xx[2][1] = {
-        {1},
+        {0},
         {0}
     }; memcpy(kf.x, xx, state_size*sizeof(double));
 
@@ -62,54 +70,60 @@ int main(void) {
     }; memcpy(kf.P, Pp, state_size*state_size*sizeof(double));    // Actual assignation of values
 
     double Ff[2][2] = {
-        {1, dt},
+        {1, .1},
         {0, 1}
     }; memcpy(kf.F, Ff, state_size*state_size*sizeof(double));
 
     double Qq[2][2] = {
-        {1, 0},
-        {0, 1}
+        {.1, 0},
+        {0, .1}
     }; memcpy(kf.Q, Qq, state_size*state_size*sizeof(double));
 
     double Hh[1][2] = {
-        {1, 0}
+        {0, 1}
     }; memcpy(kf.H, Hh, obs_size*state_size*sizeof(double));
 
     double Rr[1][1] = {
         {1}
     }; memcpy(kf.R, Rr, obs_size*obs_size*sizeof(double));
 
-    // Ejemplo de una observación
-    double z[] = {1.0};  // Observación de ejemplo (vector de tamaño 2)
+    double z[] = {0};
 
     initialize(obs_size, state_size);
 
-    printf("%f\n", kf.x[0]);
+    set_sensor_mode(Gyro_D, "GYRO-RATE");
+    set_sensor_mode(Gyro_I, "GYRO-ANG");
 
-    // Bucle de predicción y actualización
-    struct sysinfo mem_info;
-    for (int t = 0; t < 1000; ++t) {
-        printf("Iteración %d\tValor: %lf\n", t, kf.x[0]);
-        
-        get_sensor_value0(Gyro_D, &ang_d);
-        z[0] = ang_d;
+    // Main loop
 
-        // Retrieve memory information
-        sysinfo(&mem_info);
-        // Print memory information
-        printf("Total RAM: %lu MB\n", mem_info.totalram / 1024 / 1024);
-        printf("Free RAM: %lu MB\n", mem_info.freeram / 1024 / 1024);
-        printf("Used RAM: %lu MB\n", (mem_info.totalram - mem_info.freeram) / 1024 / 1024);
+    gettimeofday(&T1, NULL);
+    for (int t = 0; t < 10000; ++t) {
+        gettimeofday(&T2, NULL);
+        dt = (T2.tv_sec - T1.tv_sec) + (T2.tv_usec - T1.tv_usec)/1000000.0; // Time difference in microseconds
+        T += dt;  // Convert microseconds to seconds and update total time
 
-        kalman_predict(&kf, state_size); //! Problem here
+        // printf("Iteration %d\tValue: %lf\tTime: %lf\n", t, z[0], (T2.tv_usec - T1.tv_usec)/1000000.0); // Debugging printer
+
+        get_sensor_value0(Gyro_I, &ang);
+        get_sensor_value0(Gyro_D, &rate);
+        z[0] = ang;
+
+        double Ff[2][2] = {
+            {1, dt},  // Convert dt to seconds
+            {0, 1}
+        };
+        memcpy(kf.F, Ff, state_size * state_size * sizeof(double));
+
+        gettimeofday(&T1, NULL);  // Update T1 for the next iteration
+
+        kalman_predict(&kf, state_size);
         kalman_update(&kf, z, state_size, obs_size);
-        fprintf(file, "%f\n", kf.x[0]);
-        
-        // Aquí puedes imprimir o utilizar el estado estimado kf.x
+
+        fprintf(file, "%f\t%f\t%f\t%f\t%f\n", T, kf.x[0], kf.x[1], rate, ang);
     }
     fclose(file);
 
-    // finalize();
+    finalize();
 
     // Liberar la memoria
     free(kf.x);
@@ -121,4 +135,3 @@ int main(void) {
 
     return 0;
 }
-

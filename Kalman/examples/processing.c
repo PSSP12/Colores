@@ -6,8 +6,6 @@
 #include "ev3_port.h"
 #include "ev3_sensor.h"
 #include "ev3_tacho.h"
-// #include "coroutine.h"
-// #include "../utils/matrix.c"
 #include "../Filters/LKF.c"
 
 #include <unistd.h>
