@@ -31,6 +31,8 @@ int main(void) {
 
     uint8_t Gyro_I, Gyro_D, Color_I, Color_D, Grande_I, Grande_D, Mediano_I, Mediano_D;
     float ang, rate, T;
+    float both[2];
+    ang = 0; rate = 0;
     ev3_search_sensor_plugged_in(GYRO_DCHA, EXT_PORT__NONE_, &Gyro_D, 0);
     ev3_search_sensor_plugged_in(GYRO_IZDA, EXT_PORT__NONE_, &Gyro_I, 0);
 
@@ -84,14 +86,14 @@ int main(void) {
     }; memcpy(kf.H, Hh, obs_size*state_size*sizeof(double));
 
     double Rr[1][1] = {
-        {1}
+        {.01}
     }; memcpy(kf.R, Rr, obs_size*obs_size*sizeof(double));
 
     double z[] = {0};
 
     initialize(obs_size, state_size);
 
-    set_sensor_mode(Gyro_D, "GYRO-RATE");
+    set_sensor_mode(Gyro_D, "GYRO-G&A");
     set_sensor_mode(Gyro_I, "GYRO-ANG");
 
     // Main loop
@@ -101,12 +103,16 @@ int main(void) {
         gettimeofday(&T2, NULL);
         dt = (T2.tv_sec - T1.tv_sec) + (T2.tv_usec - T1.tv_usec)/1000000.0; // Time difference in microseconds
         T += dt;  // Convert microseconds to seconds and update total time
+        gettimeofday(&T1, NULL);  // Update T1 for the next iteration
 
         // printf("Iteration %d\tValue: %lf\tTime: %lf\n", t, z[0], (T2.tv_usec - T1.tv_usec)/1000000.0); // Debugging printer
 
         get_sensor_value0(Gyro_I, &ang);
-        get_sensor_value0(Gyro_D, &rate);
-        z[0] = ang;
+
+        get_sensor_value0(Gyro_D, &both[0]);
+        get_sensor_value1(Gyro_D, &both[1]);
+
+        z[0] = both[1];
 
         double Ff[2][2] = {
             {1, dt},  // Convert dt to seconds
@@ -114,12 +120,11 @@ int main(void) {
         };
         memcpy(kf.F, Ff, state_size * state_size * sizeof(double));
 
-        gettimeofday(&T1, NULL);  // Update T1 for the next iteration
 
         kalman_predict(&kf, state_size);
         kalman_update(&kf, z, state_size, obs_size);
 
-        fprintf(file, "%f\t%f\t%f\t%f\t%f\n", T, kf.x[0], kf.x[1], rate, ang);
+        fprintf(file, "%f\t%f\t%f\t%f\t%f\n", T, kf.x[0], kf.x[1], both[0], both[1]);
     }
     fclose(file);
 
