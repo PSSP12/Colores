@@ -32,11 +32,11 @@ void subtract_rows(double *A, double *I, int *size, int row1, int row2, double m
     }
 }
 
-double* mat_inv(int *size, double *A) {
+double* mat_inv(int *size, double *A, double* inv) {
     int n = size[0];
     double *I = (double *)malloc(n * n * sizeof(double));
     double *A_copy = (double *)malloc(n * n * sizeof(double));
-    double *inv = (double *)malloc(n * n * sizeof(double));
+    // double *inv = (double *)malloc(n * n * sizeof(double));
 
     // Initialize I as the identity matrix and A_copy as a copy of A
     for (int i = 0; i < n; i++) {
@@ -98,8 +98,10 @@ double mat_det(int *size, double *A) {
     
     double D = 0;
     
-    int i, j, o, p;
+    int i, j, o, p, sig;
     double* C = (double*)calloc((size[0]-1) * (size[1]-1), sizeof(double));
+
+    sig = -1;
 
     if (size[0] == 1) {
         return *A;
@@ -116,18 +118,21 @@ double mat_det(int *size, double *A) {
             int size2[] = {size[0]-1, size[1]-1};
             fflush(stdout);
             double v = mat_det(size2, C);
-            D = D + pow(-1, i) * A[i] * v;
+            D = D + sig * A[i] * v;
+            sig = sig*sig;
         }
         free(C);
         return D;
     }
 }
 
-double* mat_transpose(int *size, double *A){
+double* mat_transpose(int *size, double *A, double* C){
     // Transpose a matrix
-
     int i; int o;
-    double* C = (double*)calloc(1, size[0]*size[1]);
+    // double* C = (double*)calloc(1, size[0]*size[1]);
+    if (C == NULL) {
+        printf("Error allocating memory");
+    }
 
     for (i = 0; i < size[1]; ++i) {
         for (o = 0; o < size[0]; ++o) {
@@ -137,42 +142,40 @@ double* mat_transpose(int *size, double *A){
     return C;
 }
 
-double* mat_product(int *sizeA, int *sizeB, double* A, double*B){
-    // Matrix product
-
-    int i; int o; int p;
-    double* C = (double*)calloc(1, sizeA[0]*sizeB[1]);
-
-    if (C == NULL){ // Check for allocation problems
-        printf("ERROR: Couldn't allocate memory for some obscure reason... Be more careful!");
-        return NULL;
-    }
+double* mat_product(int *sizeA, int *sizeB, double* A, double* B, double* C) {
+    // Allocate memory for the result matrix C
+    // size_t num_elements = sizeA[0] * sizeB[1];
+    // double* C = (double*)calloc(num_elements, sizeof(double));
+    // if (C == NULL) {
+    //     printf("ERROR: Couldn't allocate memory for result matrix.\n");
+    //     fflush(stdout);
+    //     return NULL;
+    // }
 
     // Product calculations
-    double s;
-    for (i = 0; i < sizeA[0]; ++i) {
-        for (p = 0; p < sizeB[1]; ++p) {
-            s = 0;
-            for (o = 0; o <sizeA[1]; ++o) {
-                s = s+A[i*sizeA[1]+o]*B[p+o*sizeB[1]];
+    for (int i = 0; i < sizeA[0]; ++i) {
+        for (int p = 0; p < sizeB[1]; ++p) {
+            double s = 0;
+            for (int o = 0; o < sizeA[1]; ++o) {
+                s += A[i * sizeA[1] + o] * B[o * sizeB[1] + p];
             }
-            C[i*sizeA[1]+p] = s;
+            C[i * sizeB[1] + p] = s;
         }
     }
 
     return C;
 }
 
-double* mat_sum(int *size, double *A, double *B){
+double* mat_sum(int *size, double *A, double *B, double* C){
     // Matrix sum
 
     int i;
-    double* C = (double*)calloc(1, size[0]*size[1]);
+    // double* C = (double*)calloc(1, size[0]*size[1]);
 
-    if (C == NULL){ // Check for memory allocations issues
-        printf("ERROR: Couldn't allocate memory for some obscure reason... Be more careful!");
-        return NULL;
-    }
+    // if (C == NULL){ // Check for memory allocations issues
+    //     printf("ERROR: Couldn't allocate memory for some obscure reason... Be more careful!");
+    //     return NULL;
+    // }
     // Sum
     for (i = 0; i < sizeof(A); ++i) {
         C[i] = A[i]+B[i];
@@ -181,9 +184,9 @@ double* mat_sum(int *size, double *A, double *B){
     return C;
 }
 
-double* mat_num(double a, double *A, int *size) {
+double* mat_num(double a, int *size, double *A, double* C) {
     int i;
-    double* C = (double*)calloc(1, size[0]*size[1]);
+    // double* C = (double*)calloc(1, size[0]*size[1]);
     for(i = 0; i < size[0]*size[1]; ++i) {
         C[i] = a*A[i];
     }
