@@ -88,7 +88,7 @@ unsigned char* load_bmp_section(const char* filename, int startX, int startY, in
 
 // Function to search for a color inside an image section
 int search_colors(const char* filename, int X1, int Y1, int X2, int Y2, unsigned char margin, unsigned char* Color, int* X, int* Y) {
-    // Searches for the colo 'Color' in a box of vertices ('X1', 'Y1') and ('X2', 'Y2'), with a margin of error for the color 'margin'.
+    // Searches for the colors 'Color' in a box of vertices ('X1', 'Y1') and ('X2', 'Y2'), with a margin of error for the color 'margin'.
     // The section will be taken from 'filename' and the coordinates in the image of the found colors will be put inside 'X' and 'Y'.
     int sectionWidth = X2-X1;
     int sectionHeight = Y2-Y1;
@@ -149,6 +149,79 @@ int search_colors(const char* filename, int X1, int Y1, int X2, int Y2, unsigned
     return 0;
 }
 
+// Improved color search function
+//! Testing needed. Supposedly can search for however many colors in the same section. Should be faster and more memory efficient
+int search_colors_V2(const char* filename, int X1, int Y1, int X2, int Y2, unsigned char threshold, unsigned char* Colors, int num, int* X, int* Y) {
+    // Searches for the given colors in the Colors variable among the square of vertices (X1, Y1) (X2, Y2).
+
+    int sectionWidth = X2-X1;
+    int sectionHeight = Y2-Y1;
+    int N = sectionHeight*sectionWidth;
+
+    // Load the section
+    unsigned char* section = load_bmp_section(filename, X1, Y1, sectionWidth, sectionHeight);
+    if (!section) {
+        perror("Couldn't load the section");
+    }
+
+    unsigned char Color[3];
+    int* Pos = (int*)calloc(sectionWidth*sectionHeight, sizeof(int));
+    unsigned char ColorUpper[3];
+    unsigned char ColorLower[3];
+
+    for (int n = 0; n < num; n++) {
+        Color[0] = Colors[n*3];
+        Color[1] = Colors[n*3+1];
+        Color[2] = Colors[n*3+1];
+        
+        // Adjust margins to not step out of bounds
+        if (255 - Color[0] < threshold) {ColorUpper[0] = 255;} else {ColorUpper[0] = Color[0] + threshold;}
+        if (255 - Color[1] < threshold) {ColorUpper[1] = 255;} else {ColorUpper[1] = Color[1] + threshold;}
+        if (255 - Color[2] < threshold) {ColorUpper[2] = 255;} else {ColorUpper[2] = Color[2] + threshold;}
+        
+        if (Color[0] < threshold) {ColorLower[0] = 0;} else {ColorLower[0] = Color[0] - threshold;}
+        if (Color[1] < threshold) {ColorLower[1] = 0;} else {ColorLower[1] = Color[1] - threshold;}
+        if (Color[2] < threshold) {ColorLower[2] = 0;} else {ColorLower[2] = Color[2] - threshold;}
+
+        int o = 0;
+        Pos[0] = -1; // Ensure we have at least one element
+
+        // Search for all the pixels in the section inside the margins
+        for (int i = 0; i < sectionHeight*sectionWidth*3; i += 3) {
+            if (section[i] <= ColorUpper[0] && section[i] >= ColorLower[0]) {
+                if (section[i+1] <= ColorUpper[1] && section[i+1] >= ColorLower[1]) {
+                    if (section[i+2] <= ColorUpper[2] && section[i+2] >= ColorLower[2]) {
+                        Pos[o] = i/3;
+                        o++;
+                    }
+                }
+            }
+        }
+
+        // Convert Pos array to X and Y coordinates
+        if (Pos[0] != -1) {
+            int o = 1;
+            int rem = 0;
+            rem = Pos[0]%(X2-X1);
+            X[0+n*N] = rem + X1 + 1;
+            Y[0+n*N] = (Pos[0]-rem) / (X2-X1) + Y1 + 1;
+
+            while (Pos[o] != 0) {
+                rem = Pos[o]%(X2-X1);
+                X[o+n*N] = rem + X1 + 1;
+                Y[o+n*N] = (Pos[o]-rem) / (X2-X1) + Y1 + 1;
+                o++;
+            }
+        }
+        
+    }
+
+    free(Pos); // Free the allocated memory
+    free(section);
+    return 0;
+
+}
+
 // Function to search for fixed distances betwwen points
 int search_distances(int* X1, int* Y1, int* X2, int* Y2, float dist, float margin, int* Xres1, int* Yres1, int* Xres2, int* Yres2) {
     int X1s = 0;
@@ -172,4 +245,48 @@ int search_distances(int* X1, int* Y1, int* X2, int* Y2, float dist, float margi
     }
 
     return 0;
+}
+
+int main(void) {
+    int X1 = 0; int Y1 = 0;
+    int X2 = 20; int Y2 = 200;
+    int margin = 200;
+    FILE *file;
+    file = fopen("ImageData.csv", "w");
+    fprintf(file, "Xi\tYi\tXd\tYd\n");
+    unsigned char ColorI[3] = {0, 0, 0};
+    unsigned char ColorD[3] = {0, 0, 0};
+
+    int* XI = (int*)calloc((X2-X1)*(Y2-Y1), sizeof(int));
+    int* YI = (int*)calloc((X2-X1)*(Y2-Y1), sizeof(int));
+    int* XD = (int*)calloc((X2-X1)*(Y2-Y1), sizeof(int));
+    int* YD = (int*)calloc((X2-X1)*(Y2-Y1), sizeof(int));
+
+    search_colors("../Image/MasterpieceMat.bmp", X1, Y1, X2, Y2, margin, ColorI, XI, YI);
+    search_colors("../Image/MasterpieceMat.bmp", X1, Y1, X2, Y2, margin, ColorD, XD, YD);
+
+    int I, D;
+    I = 0; D = 0;
+    while (XI[I] != 0) {I++;}
+    while (XD[D] != 0) {D++;}
+
+    int* XIr = (int*)calloc(I*D, sizeof(int));
+    int* YIr = (int*)calloc(I*D, sizeof(int));
+    int* XDr = (int*)calloc(I*D, sizeof(int));
+    int* YDr = (int*)calloc(I*D, sizeof(int));
+
+    printf("Started searching the distances\n");
+    search_distances(XI, YI, XD, YD, 10, 10, XIr, YIr, XDr, YDr);
+    printf("Done searching for distances\n");
+    free(XI); free(YI); free(XD); free(YD);
+
+    int i = 0;
+    while (XIr[i] != 0) {
+        fprintf(file, "%i\t%i\t%i\t%i\n", XIr[i], YIr[i], XDr[i], YDr[i]);
+        i++;
+    }
+    free(XIr); free(YIr); free(XDr); free(YDr);
+    
+
+    fclose(file);
 }
