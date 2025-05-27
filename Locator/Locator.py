@@ -27,11 +27,18 @@ Start_locating = lib.func("i", "start_Locator", "ii")  # Locator thread
 Stop_locating = lib.func("i", "stop", "v")           # Stop locator thread
 # --------------------------------------------------- #
 
-R_wheel = Motor(Port.B)
-L_wheel = Motor(Port.A)
+R_wheel = Motor(Port.C)
+L_wheel = Motor(Port.D)
 
-Start_locating(OUTPUT_A, OUTPUT_B)
+Start_locating(OUTPUT_C, OUTPUT_D)
 print("Started c")
-time.sleep(30)
+
+# Do something here
+
+R_wheel.run_time(50, 2000, then=Stop.BRAKE, wait=True)
+L_wheel.run_time(50, 4000, then=Stop.BRAKE, wait=True)
+
+#
+
 Stop_locating()
 print("Ended c")
