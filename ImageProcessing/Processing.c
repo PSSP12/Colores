@@ -249,8 +249,8 @@ int search_distances(int* X1, int* Y1, int* X2, int* Y2, float dist, float margi
 
 int main(void) {
     int X1 = 0; int Y1 = 0;
-    int X2 = 20; int Y2 = 200;
-    int margin = 200;
+    int X2 = 100; int Y2 = 100;
+    int margin = 20;
     FILE *file;
     file = fopen("ImageData.csv", "w");
     fprintf(file, "Xi\tYi\tXd\tYd\n");
