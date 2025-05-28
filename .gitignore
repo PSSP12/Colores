@@ -2,3 +2,6 @@
 *.exe
 .vscode
 *.so
+
+# Directories to ignore
+DoxygenOutput

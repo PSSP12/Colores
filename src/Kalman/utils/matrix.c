@@ -116,6 +116,14 @@ int mat_inv(int *size, double *A, double* inv) {
     double *I = (double *)malloc(n * n * sizeof(double));
     double *A_copy = (double *)malloc(n * n * sizeof(double));
 
+    // Check for square matrix
+    if (n != size[1]) {
+        fprintf(stderr, "ERROR: matrix must be square (%dx%d)\n", n, size[1]);
+        free(I);
+        free(A_copy);
+        return 1; // Non-square matrix error
+    }
+
     // Initialize I as the identity matrix and A_copy as a copy of A
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
@@ -260,7 +268,7 @@ int mat_transpose(int *size, double *A, double* C){
 
     for (i = 0; i < size[1]; ++i) { // Loop through columns of A
         for (o = 0; o < size[0]; ++o) { // Loop through rows of A
-            C[i*size[0]+o] = A[i+o*size[1]];    // Assign transposed value to C
+            C[i*size[0] + o] = A[i + o*size[1]];    // Assign transposed value to C
         }
     }
     return 0;   // Return success
@@ -369,11 +377,11 @@ int mat_num(double a, int *size, double *A, double *C) {
  * @param precision Number of decimal places to print
  * @return int Error code (0 for success)
  */
-int printer(int* size, double* A, int precision) {
+int mat_print(int* size, double* A, int precision) {
     int i, o;
     for(i = 0; i < size[0]; ++i) { 
         for(o = 0; o < size[1]; ++o) {
-            printf("%.*f\t", precision, A[i*size[0]+o]);
+            printf("%.*f\t", precision, A[i*size[1]+o]);
         }
         printf("\n");
     }
