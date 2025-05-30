@@ -2,6 +2,10 @@
 *.exe
 .vscode
 *.so
+kalman_output.txt
 
 # Directories to ignore
 DoxygenOutput
+bin
+build
+lib
