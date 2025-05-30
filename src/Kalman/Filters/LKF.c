@@ -4,9 +4,51 @@
  * @brief Implementation of a Linear Kalman Filter (LKF) in C.
  * @version 0.1
  * @date 2025-05-28
- * 
- * 
- * 
+ *
+ * @details
+ * This module provides a complete implementation of a Linear Kalman Filter
+ * suited for small embedded systems or desktop simulations.  It relies on
+ * a minimal matrix‐algebra backend (`matrix.h` / `matrix.c`) for all
+ * linear‐algebra operations.
+ *
+ * The primary public functions are:
+ *   - `lkf_create()`    Allocate and initialize the filter
+ *   - `lkf_predict()`   Run the predict step (state & covariance propagation)
+ *   - `lkf_update()`    Run the update step with a measurement
+ *   - `lkf_destroy()`   Free all internal buffers
+ *
+ * Usage example:
+ * @code
+ * #include "LKF.h"
+ *
+ * int main(void) {
+ *     double x[2] = {0.0, 0.0};          // initial state
+ *     double P[4] = {1,0, 0,1};          // initial covariance
+ *     double F[4] = {1,1, 0,1};          // state‐transition
+ *     double Q[4] = {0.01,0, 0,0.01};    // process noise
+ *     double H[2] = {1, 0};              // observation model
+ *     double R[1] = {0.1};               // measurement noise
+ *     KalmanFilter kf;
+ *
+ *     if (lkf_create(&kf, x, P, F, Q, H, R, 1, 2) != 0) {
+ *         fprintf(stderr, "Failed to init Kalman filter\n");
+ *         return EXIT_FAILURE;
+ *     }
+ *
+ *     // Predict
+ *     lkf_predict(&kf);
+ *
+ *     // Update with a measurement z = 1.23
+ *     double z = 1.23;
+ *     lkf_update(&kf, &z);
+ *
+ *     // Clean up
+ *     lkf_destroy(&kf);
+ *     return EXIT_SUCCESS;
+ * }
+ * @endcode
+ *
+ * @see matrix.h
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -80,7 +122,7 @@ typedef struct {
         KH_size[2],            // Size of the product of K and H
         I_KH_size[2],          // Size of the identity matrix minus KH
         minus_KH_size[2];      // Size of the negative product of K and H
-} KalmanFilter;
+} LKF;
 
 /**
  * @brief Initializes the Kalman filter with the given observation and state sizes.
@@ -96,7 +138,7 @@ typedef struct {
  * @param state_size Size of the state vector.
  * @return int Returns 0 on success, 1 if the filter has already been started.
  */
-int lkf_create(KalmanFilter *kf, double *x, double *P, double *F, double *Q, double *H, double *R, int obs_size, int state_size) {
+int lkf_create(LKF *kf, double *x, double *P, double *F, double *Q, double *H, double *R, int obs_size, int state_size) {
     // Initializes the Kalman filter with the provided matrices and sizes.
     if (kf == NULL || x == NULL || P == NULL || F == NULL || Q == NULL || H == NULL || R == NULL) {
         return 1;  // Null-pointer error
@@ -195,7 +237,7 @@ int lkf_create(KalmanFilter *kf, double *x, double *P, double *F, double *Q, dou
  * @param kf Pointer to the KalmanFilter structure.
  * @param size Size of the state vector.
  */
-void lkf_predict(KalmanFilter *kf) {
+void lkf_predict(LKF *kf) {
     // Prediction step of the filter
     
     // x = F * x
@@ -219,7 +261,7 @@ void lkf_predict(KalmanFilter *kf) {
  * @param s_size Size of the state vector.
  * @param o_size Size of the observation vector.
  */
-void lkf_update(KalmanFilter *kf, double *z) {
+void lkf_update(LKF *kf, double *z) {
     // Update step of the filter
     
     // y = z - H * x
@@ -263,7 +305,7 @@ void lkf_update(KalmanFilter *kf, double *z) {
  * @param kf Pointer to the KalmanFilter structure to finalize.
  * @return int Returns 0 on success, 1 if the filter has not been started.
  */
-int lkf_destroy(KalmanFilter *kf) {
+int lkf_destroy(LKF *kf) {
     // Free up the previousy allocated memory
     if (!kf->started) {
         // If the filter has not been started, there is nothing to free
