@@ -1,3 +1,13 @@
+/**
+ * @file Locator.c
+ * @author Pablo Sánchez
+ * @brief This file implements a simple locator for a robot using two motors.
+ * @version 0.1
+ * @date 2025-05-30
+ * 
+ * @copyright Copyright (c) 2025
+ * 
+ */
 #include <stdio.h>
 #include <sys/time.h>
 #include "ev3.h"
@@ -20,12 +30,15 @@ float per = 0.196;          // Wheel perimeter in m | 2*pi*Radius
 volatile int Ports[2];      // Ports variable
 pthread_t Locator_thread;   // Global thread
 
-// Function to obtain the position of the robot during its motion
-// Integrates it only from wheel rotation and speed
-static void* Locator(void* arg){
+/**
+ * @brief Locator thread function.
+ * 
+ * @param arg Pointer to the argument (not used).
+ * @return int Returns 0 on success.
+ */
+static int Locator(void* arg){
     
-    // struct timeval T1, T2;      // Time storage (benchmarking)
-    struct timespec T1, T2;      // Time storage (benchmarking)
+    struct timespec T1, T2;      // Time storage
     int i;                      // Loop index
     float   Speed_R, Speed_L,   // Wheel's speed (calculations)
             Speed_G;            // Turning speed
@@ -78,13 +91,23 @@ static void* Locator(void* arg){
     return 0;
 }
 
-// Function to start the locator
+/**
+ * @brief Starts the locator thread with specified ports.
+ * 
+ * @param Port1 The port for the right motor.
+ * @param Port2 The port for the left motor.
+ * @return int Returns 0 on success.
+ */
 int start_Locator(int Port1, int Port2){
     Ports[0] = Port1; Ports[1] = Port2;
     pthread_create(&Locator_thread, NULL, Locator, NULL);   // Starts the main thread
 }
 
-// Function to stop the locator
+/**
+ * @brief Stops the locator thread.
+ * 
+ * @return int Returns 0 on success.
+ */
 int stop(void) {
     pthread_cancel(Locator_thread);     // Stops the thread
     pthread_join(Locator_thread, NULL); // Waits for the thread to reach stopping point
