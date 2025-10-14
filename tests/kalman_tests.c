@@ -11,7 +11,7 @@ int main(void) {
 	double x_max = 6.2;
 	double dt = x_max / i_max; // time step
 	double sigma = 0.9;
-	FILE *file = fopen("./kalman_output.txt", "w");
+	FILE *file = fopen("./tests/TestingData/kalman_output.txt", "w");
 	if (file == NULL) {
 		fprintf(stderr, "Failed to open file for writing\n");
 		return EXIT_FAILURE;

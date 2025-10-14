@@ -27,7 +27,7 @@ int main(void) {
     FILE *file;
 
 	// Create “TestingData” if it doesn’t already exist:
-	if (mkdir("TestingData", 0755) != 0) {
+	if (mkdir("tests/TestingData", 0755) != 0) {
 		// EEXIST is fine; any other error we bail out
 		if (errno != EEXIST) {
 			perror("mkdir TestingData");
@@ -35,7 +35,7 @@ int main(void) {
 		}
 	}
 
-    file = fopen("TestingData/ImageData.csv", "w");
+    file = fopen("tests/TestingData/ImageData.csv", "w");
 	fprintf(file, "X1=%i\tY1=%i\tX2=%i\tY2=%i\tColorI=[%i, %i, %i]\tColorD=[%i, %i, %i]\tcolor_margin=%i\tangle=%f\tang_margin=%f\tdist=%f\tdist_margin=%f\n", X1, Y1, X2, Y2, ColorI[0], ColorI[1], ColorI[2], ColorD[0], ColorD[1], ColorD[2], color_margin, angle, ang_margin, dist, dist_margin);
     fprintf(file, "Xi\tYi\tXd\tYd\n");
 
